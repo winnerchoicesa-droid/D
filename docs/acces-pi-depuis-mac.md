@@ -27,8 +27,12 @@ bash /tmp/pi-find.sh
 
 Il enchaîne trois méthodes en affichant sa progression :
 
-1. **Bonjour** (`dns-sd -B _ssh._tcp`) — liste les machines du réseau qui
-   annoncent un service SSH. C'est la méthode la plus fiable sur macOS.
+1. **Bonjour** (`dns-sd -B _ssh._tcp`) — liste les machines qui annoncent un
+   service SSH. Rapide quand ça marche, mais une liste vide ne prouve rien :
+   Raspberry Pi OS publie son nom d'hôte en mDNS sans forcément publier
+   l'enregistrement de service `_ssh._tcp`, et un Mac n'y apparaît que si
+   « Connexion à distance » est activée dans Réglages Système → Général →
+   Partage.
 2. **noms mDNS** habituels : `hermes.local`, `raspberrypi.local`, …
 3. **balayage ARP** — ping du `/24` local par paquets de 32, puis filtrage de la
    table ARP sur les préfixes MAC de la Raspberry Pi Foundation (`b8:27:eb`,
@@ -39,6 +43,14 @@ sans le reste, la commande native suffit :
 
 ```bash
 dns-sd -B _ssh._tcp local.   # Ctrl+C pour arrêter
+```
+
+Et si tu veux uniquement le balayage ARP, sans script :
+
+```bash
+ip=$(ipconfig getifaddr en0); sub=${ip%.*}
+for i in $(seq 1 254); do ping -c1 -W300 $sub.$i >/dev/null 2>&1 & done; wait
+arp -a | grep -iE 'b8:27:eb|dc:a6:32|e4:5f:01|2c:cf:67|d8:3a:dd|28:cd:c1'
 ```
 
 Pour chercher **et** se connecter directement :
