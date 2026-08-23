@@ -59,6 +59,25 @@ Pour chercher **et** se connecter directement :
 bash /tmp/pi-find.sh --ssh pi
 ```
 
+### Attendre que le Pi revienne après un redémarrage
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/winnerchoicesa-droid/d/claude/pi-access-shared-mac-mvmcvz/scripts/pi-wait.sh?v=$(date +%s)" -o /tmp/pi-wait.sh
+bash /tmp/pi-wait.sh
+```
+
+Le script boucle sur la résolution mDNS puis le balayage ARP, et s'arrête dès
+que le Pi répond. Un cycle dure une quinzaine de secondes.
+
+Compter 60 à 90 s pour un démarrage normal. Si le SSD est déclaré dans
+`/etc/fstab` et ne répond plus, systemd attend son délai de montage avant
+d'abandonner : le démarrage peut prendre 2 à 3 minutes de plus.
+
+> **Lance-le avec `bash`, pas en collant la boucle dans zsh.** zsh interactif
+> signale la fin de chaque tâche en arrière-plan, ce qui produit une ligne
+> `exit 2` par ping — 254 par cycle. Ce ne sont pas des erreurs, juste
+> l'absence de réponse, mais elles noient la sortie.
+
 ### Si aucun MAC Raspberry Pi n'apparaît
 
 Le balayage ARP ne reconnaît que les préfixes MAC de la fondation. Un Pi
