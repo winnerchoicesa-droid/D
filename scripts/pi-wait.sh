@@ -27,6 +27,8 @@ echo "Un cycle dure une quinzaine de secondes. Ctrl+C pour arreter."
 echo
 
 for t in $(seq 1 "$CYCLES"); do
+  printf 'cycle %s ' "$t"
+
   # a) resolution mDNS des noms probables
   for n in $MDNS_NAMES; do
     r=$(ping -c1 -W800 "$n.local" 2>/dev/null | sed -n '1s/.*(\([0-9.]*\)).*/\1/p')
@@ -51,7 +53,7 @@ for t in $(seq 1 "$CYCLES"); do
     exit 0
   fi
 
-  printf '%s ' "$t"
+  printf '\n'
 done
 
 echo
