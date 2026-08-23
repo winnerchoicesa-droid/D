@@ -1,5 +1,17 @@
 # Accéder au Pi (Hermes) depuis n'importe quel Mac de la maison
 
+> **La machine s'appelle `saintprex-hub`** (Debian 13), pas `hermes` ni
+> `raspberrypi`. Elle était sur `192.168.1.106` le 23/08/2026. Chercher les
+> mauvais noms mDNS a coûté une heure de diagnostic : commencer par là.
+>
+> **Le SSH n'accepte que les clés** — `PasswordAuthentication` est désactivé.
+> Sans clé déjà déposée dans `authorized_keys`, aucun mot de passe ne passera,
+> et il faut un clavier branché sur le Pi lui-même. Déposer une clé par Mac
+> *avant* d'en avoir besoin (section 3) évite de se retrouver bloqué.
+>
+> **AdGuard Home écoute sur le port 80** de cette machine. Utile pour vérifier
+> qu'elle est vivante, mais il ne donne aucun accès au système.
+
 Deux sujets séparés, à traiter dans cet ordre :
 
 1. **Se connecter au Pi** depuis un Mac qui n'est pas le tien.
@@ -139,6 +151,15 @@ Causes, par fréquence décroissante :
 | Sous-tension de l'alim → reset du port USB | `usb ... reset`, `vcgencmd get_throttled` ≠ `0x0` |
 | Câble ou adaptateur USB-SATA défaillant | `usb ... disconnect`, erreurs `uas_` |
 | SSD en fin de vie | compteurs SMART réalloués |
+
+**Cas vécu le 23/08/2026.** Un disque avait été remplacé. Le montage `/mnt/ssd`
+est devenu fantôme : le noyau répondait `EIO` sur un périphérique qui n'existait
+plus, et le bot échouait en boucle. Débrancher puis rebrancher le SSD à chaud
+n'a rien changé — un montage mort ne se répare pas à chaud. Ce qui a fonctionné :
+couper l'alimentation, rebrancher le disque, redémarrer. Le bot est reparti seul.
+
+Réflexe à retenir : après toute manipulation de disque sur cette machine,
+**redémarrer**, ne pas se contenter de rebrancher.
 
 Depuis la session SSH, sur le Pi :
 
