@@ -25,9 +25,21 @@ curl -fsSL https://raw.githubusercontent.com/winnerchoicesa-droid/d/claude/pi-ac
 bash /tmp/pi-find.sh
 ```
 
-Il essaie les noms mDNS habituels, puis balaie le réseau local et repère les
-adresses dont le préfixe MAC appartient à la Raspberry Pi Foundation
-(`b8:27:eb`, `dc:a6:32`, `e4:5f:01`, `2c:cf:67`, `d8:3a:dd`, `28:cd:c1`).
+Il enchaîne trois méthodes en affichant sa progression :
+
+1. **Bonjour** (`dns-sd -B _ssh._tcp`) — liste les machines du réseau qui
+   annoncent un service SSH. C'est la méthode la plus fiable sur macOS.
+2. **noms mDNS** habituels : `hermes.local`, `raspberrypi.local`, …
+3. **balayage ARP** — ping du `/24` local par paquets de 32, puis filtrage de la
+   table ARP sur les préfixes MAC de la Raspberry Pi Foundation (`b8:27:eb`,
+   `dc:a6:32`, `e4:5f:01`, `2c:cf:67`, `d8:3a:dd`, `28:cd:c1`).
+
+Compter une vingtaine de secondes au total. Si tu veux juste la liste Bonjour
+sans le reste, la commande native suffit :
+
+```bash
+dns-sd -B _ssh._tcp local.   # Ctrl+C pour arrêter
+```
 
 Pour chercher **et** se connecter directement :
 
