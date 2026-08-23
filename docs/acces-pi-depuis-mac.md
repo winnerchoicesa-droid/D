@@ -310,6 +310,57 @@ Host hermes
 Le tunnel s'ouvre alors avec chaque session `ssh hermes`, sans commande
 supplémentaire.
 
+### Tunnel permanent, sans Terminal ouvert
+
+`LocalForward` suppose une session SSH vivante : dès que la fenêtre se ferme,
+l'application Hermes Agent affiche « ne parvient pas à se connecter au serveur ».
+Pour un poste qui n'est pas celui d'un administrateur, il faut un service qui
+tienne le tunnel tout seul.
+
+Sur le Mac, créer `~/Library/LaunchAgents/com.hermes.tunnel.plist` :
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.hermes.tunnel</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/ssh</string>
+    <string>-N</string>
+    <string>-o</string><string>ExitOnForwardFailure=yes</string>
+    <string>-o</string><string>ServerAliveInterval=30</string>
+    <string>-o</string><string>ServerAliveCountMax=3</string>
+    <string>-o</string><string>StrictHostKeyChecking=accept-new</string>
+    <string>-i</string><string>/Users/&lt;utilisateur&gt;/.ssh/id_pi</string>
+    <string>-L</string><string>9119:127.0.0.1:9119</string>
+    <string>daniel@192.168.1.106</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>StandardErrorPath</key><string>/tmp/hermes-tunnel.err</string>
+</dict>
+</plist>
+```
+
+Le chemin de la clé et l'utilisateur distant sont écrits en dur : `launchd`
+démarre avec un environnement minimal, mieux vaut ne pas dépendre de
+`~/.ssh/config`. `KeepAlive` relance le tunnel s'il tombe, `RunAtLoad` l'ouvre
+à l'ouverture de session.
+
+Activer et vérifier :
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.hermes.tunnel.plist 2>/dev/null
+launchctl load   ~/Library/LaunchAgents/com.hermes.tunnel.plist
+lsof -nP -iTCP:9119 -sTCP:LISTEN
+```
+
+Deux lignes `ssh … (LISTEN)` signifient que c'est en place. En cas d'échec, la
+cause est dans `/tmp/hermes-tunnel.err`.
+
 ### Ne pas confondre avec les autres services
 
 Le Pi héberge plusieurs choses qui répondent en HTTP. Deux fausses pistes
