@@ -59,6 +59,38 @@ Pour chercher **et** se connecter directement :
 bash /tmp/pi-find.sh --ssh pi
 ```
 
+### Si aucun MAC Raspberry Pi n'apparaît
+
+Le balayage ARP ne reconnaît que les préfixes MAC de la fondation. Un Pi
+derrière un adaptateur USB Ethernet, une carte Wi-Fi tierce ou un MAC forcé
+passera au travers. Dans ce cas, cherche plutôt qui écoute en SSH :
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/winnerchoicesa-droid/d/claude/pi-access-shared-mac-mvmcvz/scripts/pi-scan-ssh.sh?v=$(date +%s)" -o /tmp/pi-scan-ssh.sh
+bash /tmp/pi-scan-ssh.sh
+```
+
+Le script balaie le `/24`, teste le port 22 sur chaque adresse vivante et
+affiche la bannière SSH renvoyée — une bannière `OpenSSH ... Debian` trahit un
+Linux, donc très probablement le Pi.
+
+La version en une commande, sans téléchargement :
+
+```bash
+me=$(ipconfig getifaddr en0)
+for ip in $(arp -a -n | sed -n 's/.*(\([0-9.]*\)).*/\1/p' | grep -vE '\.255$|^224\.' | grep -v "^$me$" | sort -t. -k4 -n -u); do
+  nc -z -G1 "$ip" 22 2>/dev/null && echo "$ip  → SSH ouvert"
+done
+```
+
+Si **rien** n'écoute sur le port 22, le Pi est éteint, planté, ou sur un autre
+réseau. La liste des baux DHCP de la box tranche : elle affiche aussi les
+appareils actuellement hors ligne, avec leur nom d'hôte et leur dernière IP.
+
+> Note sur le cache : `raw.githubusercontent.com` sert une version en cache
+> pendant quelques minutes. Ajoute `?v=$(date +%s)` à l'URL pour forcer la
+> version à jour.
+
 ### Si tu n'as ni le nom ni l'IP
 
 L'interface de la box/routeur (souvent `http://192.168.1.1`) liste les
