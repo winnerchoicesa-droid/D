@@ -214,6 +214,63 @@ Ensuite : `ssh hermes`.
 Pour retirer l'accès d'un Mac plus tard, il suffit de supprimer la ligne
 correspondante dans `/home/pi/.ssh/authorized_keys` sur le Pi.
 
+## 3 bis. Time Machine et Nextcloud sur le Pi
+
+### Les comptes Samba n'ont pas de tiret
+
+macOS pré-remplit le champ « Nom » de la fenêtre de connexion avec le nom du
+compte **local** du Mac — `anne-laure`. Les comptes Samba créés sur le Pi
+s'appellent `daniel`, `annelaure`, `eva`, **sans tiret**. Tant que le champ
+n'est pas corrigé, aucun mot de passe ne fonctionnera, et l'erreur ne dit pas
+que c'est l'identifiant qui est faux.
+
+Les mots de passe Samba sont saisis à l'aveugle par `smbpasswd` et ne sont
+stockés nulle part en clair. Pour en redéfinir un :
+
+```bash
+ssh -t hermes 'sudo smbpasswd -a annelaure'
+```
+
+Deux saisies identiques. `pdbedit -L` liste les comptes existants :
+
+```bash
+ssh hermes 'sudo pdbedit -L'
+```
+
+### Les partitions Time Machine
+
+| Partition | Étiquette | Taille | Point de montage | Partage Samba |
+|---|---|---|---|---|
+| `sdd1` | `daniel` | 570 Go | `/mnt/tm/daniel` | `TM-daniel` |
+| `sdd2` | `eva` | 200 Go | `/mnt/tm/eva` | `TM-eva` |
+| `sdd3` | `annelaure` | 158 Go | `/mnt/tm/annelaure` | `TM-annelaure` |
+
+Chacune est en `chmod 700` et appartient à son utilisateur : personne ne lit la
+sauvegarde d'un autre. Toutes sont déclarées dans `/etc/fstab` avec `nofail`.
+
+### Nextcloud
+
+Il tourne en conteneurs sous `/home/daniel/famille/docker-compose.yml` et
+répond sur **le port 8081** :
+
+```
+http://192.168.1.106:8081
+```
+
+Les quatre conteneurs `famille-*` (nextcloud, cron, db, redis) se sont arrêtés
+avec le code 255 pendant l'incident disque du 23/08 — dégât collatéral, aucune
+corruption. Pour les relancer :
+
+```bash
+ssh hermes 'cd /home/daniel/famille && sudo docker compose up -d'
+```
+
+Lister les comptes Nextcloud, qui sont indépendants de ceux du Pi :
+
+```bash
+ssh hermes 'sudo docker exec -u www-data famille-nextcloud php occ user:list'
+```
+
 ## 4. Atteindre le tableau de bord Hermes depuis un Mac
 
 Hermes expose une interface web, mais elle n'écoute **que sur le Pi lui-même** :
