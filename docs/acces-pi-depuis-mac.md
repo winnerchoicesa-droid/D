@@ -214,6 +214,59 @@ Ensuite : `ssh hermes`.
 Pour retirer l'accès d'un Mac plus tard, il suffit de supprimer la ligne
 correspondante dans `/home/pi/.ssh/authorized_keys` sur le Pi.
 
+## 4. Atteindre le tableau de bord Hermes depuis un Mac
+
+Hermes expose une interface web, mais elle n'écoute **que sur le Pi lui-même** :
+
+```
+hermes dashboard --host 127.0.0.1 --port 9119 --no-open --skip-build
+```
+
+Aucun balayage réseau ne la trouvera, c'est voulu. Un tableau de bord lié à
+`127.0.0.1` n'a en général pas de page de connexion : le rebasculer sur
+`0.0.0.0` donnerait le contrôle de l'agent à tout appareil du réseau, invités
+du Wi-Fi compris. On passe donc par un tunnel SSH, qui réutilise la connexion
+chiffrée déjà en place et n'ouvre rien.
+
+### Tunnel ponctuel
+
+```bash
+ssh -N -L 9119:127.0.0.1:9119 hermes
+```
+
+La commande ne rend pas la main tant que le tunnel vit. Laisser la fenêtre
+ouverte, puis aller sur `http://localhost:9119`.
+
+### Tunnel permanent
+
+Ajouter la ligne `LocalForward` au bloc `Host hermes` de `~/.ssh/config` :
+
+```
+Host hermes
+    HostName 192.168.1.106
+    User daniel
+    IdentityFile ~/.ssh/id_pi
+    ServerAliveInterval 60
+    LocalForward 9119 127.0.0.1:9119
+```
+
+Le tunnel s'ouvre alors avec chaque session `ssh hermes`, sans commande
+supplémentaire.
+
+### Ne pas confondre avec les autres services
+
+Le Pi héberge plusieurs choses qui répondent en HTTP. Deux fausses pistes
+coûteuses lors du diagnostic du 23/08 :
+
+| Port | Ce que c'est | Ce que ce n'est pas |
+|---|---|---|
+| 80 | AdGuard Home | pas Hermes |
+| 4100 | `casa-outeiro-whatsapp-bot` (`node src/server.js`) | pas Hermes non plus |
+| 9119 | **le tableau de bord Hermes**, sur `127.0.0.1` | invisible depuis le réseau |
+
+Pour identifier un port inconnu, `curl http://<ip>:<port>/health` répond
+souvent avec le nom du service, et `sudo ss -tlnp` donne le processus.
+
 ### Accès depuis l'extérieur de la maison
 
 N'ouvre **pas** le port 22 sur la box. Installe [Tailscale](https://tailscale.com)
