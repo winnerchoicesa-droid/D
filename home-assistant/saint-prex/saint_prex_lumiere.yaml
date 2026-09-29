@@ -1,0 +1,64 @@
+# Paquet Home Assistant – Saint-Prex : pas de baisse automatique de la lumière avant 22h00.
+#
+# Installation :
+#   1. Dans configuration.yaml, s'assurer que les paquets sont activés :
+#        homeassistant:
+#          packages: !include_dir_named packages
+#   2. Copier ce fichier dans config/packages/saint_prex_lumiere.yaml
+#   3. Remplacer automation.baisse_lumiere_soir par l'identifiant réel de
+#      l'automatisation qui baisse la lumière (Paramètres > Automatisations > ... > Paramètres > ID d'entité).
+#   4. Paramètres > Système > Redémarrer > « Recharger le YAML » ou redémarrer HA.
+#
+# Principe : l'automatisation de baisse est DÉSACTIVÉE chaque jour à 06h00 (et au démarrage de HA
+# si l'heure est avant 22h) puis RÉACTIVÉE à l'heure choisie (22h00 par défaut, modifiable dans l'UI).
+# Références :
+#   - https://www.home-assistant.io/docs/automation/trigger/#time-trigger
+#   - https://www.home-assistant.io/docs/scripts/conditions/#time-condition
+#   - https://www.home-assistant.io/integrations/automation/#action-automationturn_on
+#   - https://www.home-assistant.io/docs/configuration/packages/
+
+input_datetime:
+  saint_prex_heure_baisse_lumiere:
+    name: "Saint-Prex – heure à partir de laquelle la lumière peut baisser"
+    has_date: false
+    has_time: true
+    initial: "22:00:00"
+
+automation:
+  - id: saint_prex_bloquer_baisse_avant_22h
+    alias: "Saint-Prex – bloquer la baisse de lumière avant 22h"
+    description: "Désactive l'automatisation de baisse de lumière le matin et au démarrage de HA."
+    mode: single
+    triggers:
+      - trigger: time
+        at: "06:00:00"
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: time
+        after: "06:00:00"
+        before: input_datetime.saint_prex_heure_baisse_lumiere
+    actions:
+      - action: automation.turn_off
+        target:
+          entity_id: automation.baisse_lumiere_soir   # <-- à remplacer
+        data:
+          stop_actions: true
+
+  - id: saint_prex_autoriser_baisse_des_22h
+    alias: "Saint-Prex – autoriser la baisse de lumière dès 22h"
+    description: "Réactive l'automatisation de baisse de lumière à l'heure configurée (22h00 par défaut)."
+    mode: single
+    triggers:
+      - trigger: time
+        at: input_datetime.saint_prex_heure_baisse_lumiere
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: time
+        after: input_datetime.saint_prex_heure_baisse_lumiere
+        before: "06:00:00"
+    actions:
+      - action: automation.turn_on
+        target:
+          entity_id: automation.baisse_lumiere_soir   # <-- à remplacer
