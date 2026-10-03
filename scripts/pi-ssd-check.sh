@@ -48,8 +48,12 @@ df -h "$MOUNT" 2>/dev/null
 df -i "$MOUNT" 2>/dev/null
 
 hr "Erreurs noyau recentes (USB / SATA / I/O)"
-dmesg 2>/dev/null | grep -iE 'i/o error|usb .*(reset|disconnect)|uas_|ata[0-9]|read-only|EXT4-fs error|scsi' \
-  | tail -30 || echo "(rien, ou dmesg necessite sudo)"
+kern=$(dmesg 2>/dev/null | grep -iE 'i/o error|usb .*(reset|disconnect)|uas_|ata[0-9]|read-only|EXT4-fs error|scsi' | tail -30)
+if [ -n "$kern" ]; then
+  printf '%s\n' "$kern"
+else
+  echo "(rien, ou dmesg necessite sudo)"
+fi
 
 hr "Alimentation / sous-tension"
 if command -v vcgencmd >/dev/null 2>&1; then
@@ -59,11 +63,17 @@ if command -v vcgencmd >/dev/null 2>&1; then
 fi
 
 hr "Sante SMART du SSD"
-if command -v smartctl >/dev/null 2>&1 && [ -n "$DEV" ]; then
-  BASE=$(lsblk -no PKNAME "$DEV" 2>/dev/null)
-  smartctl -a "/dev/${BASE:-sda}" 2>&1 | head -40
-else
+if ! command -v smartctl >/dev/null 2>&1; then
   echo "smartctl absent. Installer : sudo apt install smartmontools"
+elif [ -z "$DEV" ]; then
+  echo "Aucun peripherique monte sur $MOUNT : rien a interroger."
+else
+  BASE=$(lsblk -no PKNAME "$DEV" 2>/dev/null | head -1)
+  if [ -n "$BASE" ]; then
+    smartctl -a "/dev/$BASE" 2>&1 | head -40
+  else
+    echo "Disque parent de $DEV introuvable ; pas de supposition sur /dev/sda."
+  fi
 fi
 
 hr "Fichier en cause"

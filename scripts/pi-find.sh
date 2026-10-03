@@ -6,7 +6,7 @@
 #
 # Trois methodes, de la plus fiable a la plus brutale :
 #   1. dns-sd : liste les machines qui annoncent un service SSH en Bonjour
-#   2. noms mDNS habituels (hermes.local, raspberrypi.local, ...)
+#   2. noms mDNS habituels (saintprex-hub.local, hermes.local, ...)
 #   3. balayage ping du sous-reseau + table ARP filtree sur les prefixes MAC
 #      (OUI) de la Raspberry Pi Foundation
 
@@ -16,7 +16,7 @@ SSH_USER=""
 [ "${1:-}" = "--ssh" ] && SSH_USER="${2:-pi}"
 
 OUIS="b8:27:eb dc:a6:32 e4:5f:01 28:cd:c1 2c:cf:67 d8:3a:dd"
-MDNS_NAMES="hermes.local raspberrypi.local pi.local hermes-pi.local"
+MDNS_NAMES="saintprex-hub.local hermes.local raspberrypi.local pi.local hermes-pi.local"
 
 say() { printf '%s\n' "$*" >&2; }
 
@@ -47,7 +47,7 @@ if command -v dns-sd >/dev/null 2>&1; then
     pick=$(printf '%s\n' "$names" \
       | grep -v ' ' \
       | grep -vix "${me:-__none__}" \
-      | grep -iE 'hermes|raspberry|^pi$|-pi$|^pi-' | head -1)
+      | grep -iE 'saintprex|hermes|raspberry|^pi$|-pi$|^pi-' | head -1)
     [ -n "$pick" ] && found_host="$pick.local"
   else
     say "      rien annonce en Bonjour."

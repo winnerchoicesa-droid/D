@@ -26,11 +26,12 @@ Ouvre **Terminal** (Cmd+Espace → « Terminal »).
 ### Le chemin rapide
 
 ```bash
-ssh pi@hermes.local
+ssh daniel@saintprex-hub.local
 ```
 
-Remplace `pi` par ton nom d'utilisateur réel sur le Pi, et `hermes.local` par
-le hostname réel. Si tu ne les connais pas, passe par le script :
+C'est le nom et l'utilisateur réels de la machine (voir l'encadré ci-dessus).
+Si le `.local` ne résout pas, l'IP marche aussi : `ssh daniel@192.168.1.106`.
+Et si tu ne retrouves ni l'un ni l'autre, passe par le script :
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/winnerchoicesa-droid/d/claude/pi-access-shared-mac-mvmcvz/scripts/pi-find.sh -o /tmp/pi-find.sh
@@ -45,7 +46,8 @@ Il enchaîne trois méthodes en affichant sa progression :
    l'enregistrement de service `_ssh._tcp`, et un Mac n'y apparaît que si
    « Connexion à distance » est activée dans Réglages Système → Général →
    Partage.
-2. **noms mDNS** habituels : `hermes.local`, `raspberrypi.local`, …
+2. **noms mDNS** connus : `saintprex-hub.local` d'abord, puis `hermes.local`,
+   `raspberrypi.local`, …
 3. **balayage ARP** — ping du `/24` local par paquets de 32, puis filtrage de la
    table ARP sur les préfixes MAC de la Raspberry Pi Foundation (`b8:27:eb`,
    `dc:a6:32`, `e4:5f:01`, `2c:cf:67`, `d8:3a:dd`, `28:cd:c1`).
@@ -196,7 +198,7 @@ Sur chaque Mac (celui d'Anne-Laure inclus) :
 
 ```bash
 ssh-keygen -t ed25519 -C "mac-anne-laure"
-ssh-copy-id pi@hermes.local
+ssh-copy-id daniel@saintprex-hub.local
 ```
 
 Puis un alias pour ne plus retaper l'adresse — sur chaque Mac, dans
@@ -204,7 +206,7 @@ Puis un alias pour ne plus retaper l'adresse — sur chaque Mac, dans
 
 ```
 Host hermes
-    HostName hermes.local
+    HostName saintprex-hub.local
     User pi
     IdentityFile ~/.ssh/id_ed25519
 ```

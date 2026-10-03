@@ -15,7 +15,8 @@ set -uo pipefail
 
 CYCLES="${CYCLES:-40}"
 OUIS='b8:27:eb|dc:a6:32|e4:5f:01|28:cd:c1|2c:cf:67|d8:3a:dd'
-MDNS_NAMES="hermes raspberrypi pi hermes-pi"
+MDNS_NAMES="saintprex-hub hermes raspberrypi pi hermes-pi"
+PI_USER="${PI_USER:-daniel}"
 
 iface=$(route -n get default 2>/dev/null | awk '/interface:/{print $2}')
 myip=$(ipconfig getifaddr "${iface:-en0}" 2>/dev/null)
@@ -34,7 +35,7 @@ for t in $(seq 1 "$CYCLES"); do
     r=$(ping -c1 -W800 "$n.local" 2>/dev/null | sed -n '1s/.*(\([0-9.]*\)).*/\1/p')
     if [ -n "$r" ]; then
       echo; echo ">>> TROUVE : $n.local -> $r"
-      echo "    ssh pi@$n.local"
+      echo "    ssh $PI_USER@$n.local"
       exit 0
     fi
   done
@@ -49,7 +50,7 @@ for t in $(seq 1 "$CYCLES"); do
   if [ -n "$hit" ]; then
     echo; echo ">>> TROUVE (MAC Raspberry Pi) :"; echo "$hit"
     ip=$(printf '%s' "$hit" | sed -n '1s/.*(\([0-9.]*\)).*/\1/p')
-    echo "    ssh pi@$ip"
+    echo "    ssh $PI_USER@$ip"
     exit 0
   fi
 
